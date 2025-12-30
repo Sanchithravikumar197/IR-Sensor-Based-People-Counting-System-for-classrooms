@@ -1,0 +1,1 @@
+An infrared sensor–based people counting system that tracks entries and exits to display real-time room occupancy. It helps with attendance monitoring, space management, and safety. This project strengthened my skills in sensor integration, logic design, and embedded systems programming.
