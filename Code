@@ -1,0 +1,90 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+#define IR_IN 3
+#define IR_OUT 2
+#define BUZZER 4
+
+int inCount = 0;
+int outCount = 0;
+
+unsigned long lastTriggerTime = 0;
+const unsigned long debounceDelay = 200;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27 for most LCDs
+
+void setup() {
+  pinMode(IR_IN, INPUT);
+  pinMode(IR_OUT, INPUT);
+  pinMode(BUZZER, OUTPUT);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("System Ready");
+
+  Serial.begin(9600);
+  delay(1000);
+  printStatus();
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+
+  // Entry: IN -> OUT
+  if (digitalRead(IR_IN) == LOW && (currentTime - lastTriggerTime > debounceDelay)) {
+    while (digitalRead(IR_OUT) == HIGH);
+    delay(50);
+    if (digitalRead(IR_OUT) == LOW) {
+      inCount++;
+      Serial.println("✅ Student Entered");
+      buzz();
+      printStatus();
+      lastTriggerTime = currentTime;
+    }
+  }
+
+  // Exit: OUT -> IN
+  if (digitalRead(IR_OUT) == LOW && (currentTime - lastTriggerTime > debounceDelay)) {
+    while (digitalRead(IR_IN) == HIGH);
+    delay(50);
+    if (digitalRead(IR_IN) == LOW) {
+      outCount++;
+      Serial.println("⬅️ Student Exited");
+      buzz();
+      printStatus();
+      lastTriggerTime = currentTime;
+    }
+  }
+}
+
+void printStatus() {
+  int present = inCount - outCount;
+  if (present < 0) present = 0;
+
+  Serial.print(" IN: ");
+  Serial.print(inCount);
+  Serial.print(" | OUT: ");
+  Serial.print(outCount);
+  Serial.print(" | PRESENT: ");
+  Serial.println(present);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(" IN:");
+  lcd.print(inCount);
+  lcd.print("  OUT:");
+  lcd.print(outCount);
+
+  lcd.setCursor(0, 1);
+  lcd.print("TOTAL PRESENT:");
+  lcd.print(present);
+}
+
+void buzz() {
+  digitalWrite(BUZZER, HIGH);
+  delay(100);
+  digitalWrite(BUZZER, LOW);
+}
+JANET PRO
